@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -35,8 +36,8 @@ public class MainActivity extends AppCompatActivity {
     // 画像の情報を取得するためのフィールド(以下2行)
     ContentResolver resolver;
     Cursor cursor;
-    //パーミッションチェック
-    int check = 0;
+    //再生・停止ボタンのテキストView
+    //TextView changedText;
 
 
     @Override
@@ -52,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
         mPauseButton = (Button) findViewById(R.id.pause_button);
         mGoButton = (Button) findViewById(R.id.go_button);
 
+        //changedText = (TextView)findViewById(R.id.chengedText);
+
+
         //再生・停止ボタンの処理
         mPauseButton.setOnClickListener(new View.OnClickListener() {
 
@@ -60,6 +64,13 @@ public class MainActivity extends AppCompatActivity {
 
 
                 if (mTimer == null) {
+
+                    //次へボタン，戻るボタンのタップを不可(以下2行)
+                    mBackButton.setEnabled(false);
+                    mGoButton.setEnabled(false);
+
+                    //ボタンのテキストを変更
+                    mPauseButton.setText("停止");
 
 
                     mTimer = new Timer();
@@ -80,6 +91,13 @@ public class MainActivity extends AppCompatActivity {
                     }, 2000, 2000);//最初に始動されまで2000ミリ秒，のちに2000ミリ秒間隔,run()を呼び出す
                 } else if (mTimer != null) {
 
+                    //次へボタン，戻るボタンのタップを可能に(以下2行)
+                    mBackButton.setEnabled(true);
+                    mGoButton.setEnabled(true);
+
+                    //ボタンのテキストを変更
+                    mPauseButton.setText("再生");
+
                     mTimer.cancel();
                     mTimer = null;
                     Log.d("ANDROID", "再生/停止ボタンで停止しました．");
@@ -97,10 +115,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                //自動スライドショーが動いてる時にはこのボタンは無効
-                if (mTimer == null) {
                     getContentsBackInfo();
-                }
 
             }
         });
@@ -113,12 +128,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-
-                //自動スライドショーが動いてる時にはこのボタンは無効
-                if (mTimer == null) {
-
                     getContentsNextInfo();
-                }
 
             }
         });
@@ -160,6 +170,15 @@ public class MainActivity extends AppCompatActivity {
                 null, // フィルタ用パラメータ
                 null // ソート (null ソートなし)
         );
+
+        if (cursor.moveToFirst()) {
+            int fieldIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID);
+            Long id = cursor.getLong(fieldIndex);
+            Uri imageUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+
+            ImageView imageView = (ImageView) findViewById(R.id.imageView);
+            imageView.setImageURI(imageUri);
+        }
 
     }
 
@@ -235,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 // 許可されている
                 getContentsInfo();
-                check++;
+
             } else {
                 // 許可されていないので許可ダイアログを表示する
                 requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CODE);
@@ -243,19 +262,11 @@ public class MainActivity extends AppCompatActivity {
             // Android 5系以下の場合
         } else {
             getContentsInfo();
-            check++;
+
         }
     }
 
-    protected void permissionCheck(){
-        if(PackageManager.PERMISSION_GRANTED == 0){
-            check++;
 
-        }
-        else if(check==0){
-            finish();
-        }
-    }
 
 
 
